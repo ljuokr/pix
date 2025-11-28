@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeoPixel Matrix Converter & Painter</title>
+  <title>NeoPixel-Matrix Konverter & Maler</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
 <header>
-  <h1>NeoPixel Matrix Converter & Painter</h1>
-  <p class="subtitle">Konvertiere Bilder, justiere sie fuer deine LED-Matrix, male Pixel nach und teste Animationen direkt im Browser.</p>
+  <h1>NeoPixel-Matrix Konverter & Maler</h1>
+  <p class="subtitle">Konvertiere Bilder, justiere sie für deine LED-Matrix, male Pixel nach und teste Animationen direkt im Browser.</p>
 </header>
 
 <div class="container">
@@ -32,7 +32,7 @@
         </label>
 
         <label style="flex:1;">
-          Matrix-Hoehe (Pixel):
+          Matrix-Höhe (Pixel):
           <input type="number" id="matrixHeight" min="1" max="64" value="16">
         </label>
       </div>
@@ -114,45 +114,8 @@
     </section>
 
     <section>
-      <h3>Pixel bearbeiten</h3>
-      <div style="display:flex;justify-content:center;margin-bottom:0.5rem;">
-        <div id="colorPalette" class="palette"></div>
-      </div>
-
-      <div class="inline-row" style="margin-bottom:0.5rem;">
-        <div id="selectedColorPreview"
-             style="width:1.6rem;height:1.6rem;border:1px solid #000;"></div>
-        <small id="selectedColorLabel">R:255 G:255 B:255</small>
-      </div>
-
-      <label>CMYK-Farbe:</label>
-
-      <label>
-        Cyan (0–100 %):
-        <input type="range" id="cSlider" min="0" max="100" value="0">
-        <small><span id="cValue">0</span> %</small>
-      </label>
-
-      <label>
-        Magenta (0–100 %):
-        <input type="range" id="mSlider" min="0" max="100" value="0">
-        <small><span id="mValue">0</span> %</small>
-      </label>
-
-      <label>
-        Yellow (0–100 %):
-        <input type="range" id="ySlider" min="0" max="100" value="0">
-        <small><span id="yValue">0</span> %</small>
-      </label>
-
-      <label>
-        Key/Black (0–100 %):
-        <input type="range" id="kSlider" min="0" max="100" value="0">
-        <small><span id="kValue">0</span> %</small>
-      </label>
-
-      <div id="message" style="margin-top:0.5rem;"></div>
-
+      <h3>Vorschau & Status</h3>
+      <div id="message" style="margin-bottom:0.5rem;"></div>
       <canvas id="sourcePreview" width="160" height="160" style="border:1px solid #ccc;"></canvas>
       <canvas id="workCanvas" width="16" height="16" style="display:none;"></canvas>
     </section>
@@ -161,8 +124,44 @@
   <!-- Panel 2: Simulator & Animation -->
   <div class="panel" style="flex:1 1 320px;">
     <h2>2. Simulator & Animation</h2>
+    <section class="color-tools">
+      <h3>Pixel & Farbe</h3>
+      <div class="color-tools-grid">
+        <div class="palette-wrapper">
+          <div id="colorPalette" class="palette"></div>
+        </div>
+        <div class="color-readout">
+          <div class="inline-row" style="margin-bottom:0.35rem;">
+            <div id="selectedColorPreview" class="color-preview"></div>
+            <small id="selectedColorLabel">R:255 G:255 B:255</small>
+          </div>
+
+          <label style="margin-bottom:0.35rem;">CMYK-Farbe:</label>
+          <label>
+            Cyan (0–100 %):
+            <input type="range" id="cSlider" min="0" max="100" value="0">
+            <small><span id="cValue">0</span> %</small>
+          </label>
+          <label>
+            Magenta (0–100 %):
+            <input type="range" id="mSlider" min="0" max="100" value="0">
+            <small><span id="mValue">0</span> %</small>
+          </label>
+          <label>
+            Yellow (0–100 %):
+            <input type="range" id="ySlider" min="0" max="100" value="0">
+            <small><span id="yValue">0</span> %</small>
+          </label>
+          <label style="margin-bottom:0;">
+            Key/Black (0–100 %):
+            <input type="range" id="kSlider" min="0" max="100" value="0">
+            <small><span id="kValue">0</span> %</small>
+          </label>
+        </div>
+      </div>
+    </section>
     <canvas id="pixelCanvas" width="320" height="320"></canvas>
-    <small>Links-Klick oder Drag, um Pixel mit der gewaehlten Farbe zu bemalen.</small>
+    <small>Links-Klick oder Drag, um Pixel mit der gewählten Farbe zu bemalen.</small>
 
     <h3 style="font-size:0.95rem;margin-top:0.75rem;">Frames</h3>
 
@@ -183,20 +182,20 @@
 
     <button id="duplicateFrameBtn" type="button">Aktuellen Frame duplizieren</button>
 
-    <h3 style="font-size:0.95rem;margin-top:0.75rem;">Uebergang</h3>
+    <h3 style="font-size:0.95rem;margin-top:0.75rem;">Übergang</h3>
 
     <div id="transitionTypeContainer"
          style="display:flex;flex-wrap:wrap;gap:0.4rem;font-size:0.85rem;">
       <label><input type="radio" name="transitionType" value="none" checked> keiner</label>
-      <label><input type="radio" name="transitionType" value="fadeSlow"> ueberblenden langsam</label>
-      <label><input type="radio" name="transitionType" value="fadeFast"> ueberblenden schnell</label>
+      <label><input type="radio" name="transitionType" value="fadeSlow"> Überblenden langsam</label>
+      <label><input type="radio" name="transitionType" value="fadeFast"> Überblenden schnell</label>
       <label><input type="radio" name="transitionType" value="scroll"> rollend</label>
       <label><input type="radio" name="transitionType" value="switch"> wechseln</label>
     </div>
 
     <div id="transitionExtra" style="display:none;margin-top:0.4rem;">
       <label>
-        Uebergangsintensitaet:
+        Übergangsintensität:
         <input type="range" id="transitionIntensity" min="1" max="10" value="5">
         <small><span id="transitionIntensityValue">5</span></small>
       </label>

@@ -68,6 +68,15 @@
   const workCtx = workCanvas.getContext("2d");
   const simCtx = pixelCanvas.getContext("2d");
 
+  function resizePixelCanvas() {
+    const wrapperWidth = pixelCanvas.parentElement.getBoundingClientRect().width || 360;
+    const target = Math.max(280, Math.min(wrapperWidth - 8, 540));
+    pixelCanvas.width = target;
+    pixelCanvas.height = target;
+    pixelCanvas.style.width = target + "px";
+    pixelCanvas.style.height = target + "px";
+  }
+
   // Zustand Matrix und Frames
   let matrixW = 16;
   let matrixH = 16;
@@ -644,6 +653,36 @@
     lines.push("  }");
     lines.push("}");
     lines.push("");
+    lines.push("void scrollBetweenFrames(uint8_t fromIndex, uint8_t toIndex, uint8_t smoothSteps, uint16_t stepDelay) {");
+    lines.push("  uint16_t totalSteps = uint16_t(MATRIX_WIDTH) * smoothSteps;");
+    lines.push("  for (uint16_t s = 0; s <= totalSteps; s++) {");
+    lines.push("    for (uint16_t y = 0; y < MATRIX_HEIGHT; y++) {");
+    lines.push("      for (uint16_t x = 0; x < MATRIX_WIDTH; x++) {");
+    lines.push("        uint32_t shifted = uint32_t(x) * smoothSteps + s;");
+    lines.push("        uint16_t baseCol = shifted / smoothSteps;");
+    lines.push("        uint8_t frac = shifted % smoothSteps;");
+    lines.push("        uint16_t idx1 = y * MATRIX_WIDTH + (baseCol % MATRIX_WIDTH);");
+    lines.push("        uint16_t idx2 = y * MATRIX_WIDTH + ((baseCol + 1) % MATRIX_WIDTH);");
+    lines.push("        bool firstFromA = baseCol < MATRIX_WIDTH;");
+    lines.push("        bool secondFromA = (baseCol + 1) < MATRIX_WIDTH;");
+    lines.push("        uint8_t r1 = frames[firstFromA ? fromIndex : toIndex][idx1][0];");
+    lines.push("        uint8_t g1 = frames[firstFromA ? fromIndex : toIndex][idx1][1];");
+    lines.push("        uint8_t b1 = frames[firstFromA ? fromIndex : toIndex][idx1][2];");
+    lines.push("        uint8_t r2 = frames[secondFromA ? fromIndex : toIndex][idx2][0];");
+    lines.push("        uint8_t g2 = frames[secondFromA ? fromIndex : toIndex][idx2][1];");
+    lines.push("        uint8_t b2 = frames[secondFromA ? fromIndex : toIndex][idx2][2];");
+    lines.push("        uint8_t r = (uint16_t(r1) * (smoothSteps - frac) + uint16_t(r2) * frac) / smoothSteps;");
+    lines.push("        uint8_t g = (uint16_t(g1) * (smoothSteps - frac) + uint16_t(g2) * frac) / smoothSteps;");
+    lines.push("        uint8_t b = (uint16_t(b1) * (smoothSteps - frac) + uint16_t(b2) * frac) / smoothSteps;");
+    lines.push("        uint16_t outIdx = y * MATRIX_WIDTH + x;");
+    lines.push("        strip.setPixelColor(outIdx, r, g, b);");
+    lines.push("      }");
+    lines.push("    }");
+    lines.push("    strip.show();");
+    lines.push("    delay(stepDelay);");
+    lines.push("  }");
+    lines.push("}");
+    lines.push("");
     lines.push("void setup() {");
     lines.push("  strip.begin();");
     lines.push("  strip.show();");
@@ -660,8 +699,13 @@
     lines.push("    uint8_t steps = transitionIntensity;");
     lines.push("    uint16_t stepDelay = (transitionType == TRANSITION_FADE_SLOW) ? 40 : 15;");
     lines.push("    fadeBetweenFrames(current, next, steps, stepDelay);");
+    lines.push("  } else if (transitionType == TRANSITION_SCROLL) {");
+    lines.push("    uint8_t smoothSteps = transitionIntensity < 2 ? 2 : transitionIntensity;");
+    lines.push("    scrollBetweenFrames(current, next, smoothSteps, 16);");
+    lines.push("  } else if (transitionType == TRANSITION_SWITCH) {");
+    lines.push("    showFrame(next);");
     lines.push("  }");
-    lines.push("  // TRANSITION_SCROLL / TRANSITION_SWITCH koennen bei Bedarf erweitert werden.");
+    lines.push("  // Alle Uebergaenge sind oben umgesetzt.");
     lines.push("");
     lines.push("  current = next;");
     lines.push("}");
@@ -735,6 +779,37 @@
     lines.push("  }");
     lines.push("}");
     lines.push("");
+    lines.push("function scrollBetween(fromIdx: number, toIdx: number, smoothSteps: number, stepDelay: number) {");
+    lines.push("  const totalSteps = width * smoothSteps");
+    lines.push("  for (let s = 0; s <= totalSteps; s++) {");
+    lines.push("    for (let y = 0; y < height; y++) {");
+    lines.push("      for (let x = 0; x < width; x++) {");
+    lines.push("        const shifted = x * smoothSteps + s");
+    lines.push("        const baseCol = Math.idiv(shifted, smoothSteps)");
+    lines.push("        const frac = shifted % smoothSteps");
+    lines.push("        const idx1 = y * width + (baseCol % width)");
+    lines.push("        const idx2 = y * width + ((baseCol + 1) % width)");
+    lines.push("        const firstFromA = baseCol < width");
+    lines.push("        const secondFromA = (baseCol + 1) < width");
+    lines.push("        const c1 = firstFromA ? frames[fromIdx][idx1] : frames[toIdx][idx1]");
+    lines.push("        const c2 = secondFromA ? frames[fromIdx][idx2] : frames[toIdx][idx2]");
+    lines.push("        const r1 = (c1 >> 16) & 0xff");
+    lines.push("        const g1 = (c1 >> 8) & 0xff");
+    lines.push("        const b1 = c1 & 0xff");
+    lines.push("        const r2 = (c2 >> 16) & 0xff");
+    lines.push("        const g2 = (c2 >> 8) & 0xff");
+    lines.push("        const b2 = c2 & 0xff");
+    lines.push("        const r = Math.idiv(r1 * (smoothSteps - frac) + r2 * frac, smoothSteps)");
+    lines.push("        const g = Math.idiv(g1 * (smoothSteps - frac) + g2 * frac, smoothSteps)");
+    lines.push("        const b = Math.idiv(b1 * (smoothSteps - frac) + b2 * frac, smoothSteps)");
+    lines.push("        strip.setPixelColor(y * width + x, (r << 16) | (g << 8) | b)");
+    lines.push("      }");
+    lines.push("    }");
+    lines.push("    strip.show();");
+    lines.push("    basic.pause(stepDelay);");
+    lines.push("  }");
+    lines.push("}");
+    lines.push("");
     lines.push("basic.forever(function () {");
     lines.push("  let current = 0");
     lines.push("  while (true) {");
@@ -745,8 +820,12 @@
     lines.push("      const steps = transitionIntensity");
     lines.push("      const stepDelay = (transitionType == \"fadeSlow\") ? 40 : 15");
     lines.push("      fadeBetween(current, next, steps, stepDelay)");
+    lines.push("    } else if (transitionType == \"scroll\") {");
+    lines.push("      const smoothSteps = Math.max(transitionIntensity, 2)");
+    lines.push("      scrollBetween(current, next, smoothSteps, 16)");
+    lines.push("    } else if (transitionType == \"switch\") {");
+    lines.push("      showFrame(next)");
     lines.push("    }");
-    lines.push("    // \"scroll\" und \"switch\" verhalten sich wie direktes Wechseln.");
     lines.push("    current = next");
     lines.push("  }");
     lines.push("})");
@@ -776,6 +855,38 @@
     return out;
   }
 
+  function scrollFrames(a, b, t) {
+    const h = matrixH;
+    const w = matrixW;
+    const out = new Array(h);
+    const shift = t * w;
+    for (let y = 0; y < h; y++) {
+      const row = new Array(w);
+      for (let x = 0; x < w; x++) {
+        const src = x + shift;
+        const base = Math.floor(src);
+        const frac = src - base;
+
+        const idxA = base % w;
+        const idxB = (base + 1) % w;
+
+        const useFromA1 = base < w;
+        const useFromA2 = (base + 1) < w;
+
+        const p1 = useFromA1 ? a[y][idxA] : b[y][idxA];
+        const p2 = useFromA2 ? a[y][idxB] : b[y][idxB];
+
+        row[x] = {
+          r: Math.round(p1.r * (1 - frac) + p2.r * frac),
+          g: Math.round(p1.g * (1 - frac) + p2.g * frac),
+          b: Math.round(p1.b * (1 - frac) + p2.b * frac)
+        };
+      }
+      out[y] = row;
+    }
+    return out;
+  }
+
   function animationLoop(timestamp) {
     if (!previewPlaying) return;
     if (!previewFrames.length) {
@@ -794,18 +905,26 @@
     const nextIndex = (currentIndex + 1) % previewFrames.length;
     const holdDuration = Math.max(10, previewDurations[currentIndex] || 500);
 
-    if (transitionType === "fadeSlow" || transitionType === "fadeFast") {
-      const base = (transitionType === "fadeSlow") ? 40 : 15;
-      const fadeTotal = base * transitionIntensity;
+    const animatedTransition =
+      transitionType === "fadeSlow" || transitionType === "fadeFast" || transitionType === "scroll";
+
+    if (animatedTransition) {
+      const isFade = transitionType === "fadeSlow" || transitionType === "fadeFast";
+      const durationBase = isFade
+        ? (transitionType === "fadeSlow" ? 40 : 18)
+        : Math.max(16, 55 - transitionIntensity * 3);
+      const transitionTotal = isFade
+        ? durationBase * transitionIntensity
+        : Math.max(durationBase * matrixW, durationBase * 12);
 
       if (previewState === "hold") {
         if (previewStateElapsed >= holdDuration) {
-          previewState = "fade";
+          previewState = "transition";
           previewStateElapsed = 0;
         }
         drawSimulator(previewFrames[currentIndex]);
-      } else if (previewState === "fade") {
-        let t = fadeTotal > 0 ? previewStateElapsed / fadeTotal : 1;
+      } else if (previewState === "transition") {
+        const t = transitionTotal > 0 ? previewStateElapsed / transitionTotal : 1;
         if (t >= 1) {
           previewCurrentFrameIndex = nextIndex;
           currentFrameInfo.textContent =
@@ -816,12 +935,12 @@
         } else {
           const frameA = previewFrames[currentIndex];
           const frameB = previewFrames[nextIndex];
-          const blended = blendFrames(frameA, frameB, t);
+          const blended = isFade ? blendFrames(frameA, frameB, t) : scrollFrames(frameA, frameB, t);
           drawSimulator(blended);
         }
       }
     } else {
-      // keine Ueberblendung: einfach halten und wechseln
+      // keine animierte Ueberblendung: entweder direkt wechseln oder hart umschalten
       if (previewStateElapsed >= holdDuration) {
         previewCurrentFrameIndex = nextIndex;
         currentFrameInfo.textContent =
@@ -887,6 +1006,9 @@
       durations.push(framesData[f].duration || 500);
     }
     previewDurations = durations;
+    previewState = "hold";
+    previewStateElapsed = 0;
+    previewLastTimestamp = null;
     if (previewCurrentFrameIndex >= previewFrames.length) {
       previewCurrentFrameIndex = 0;
     }
@@ -1081,7 +1203,7 @@
   transitionTypeContainer.addEventListener("change", function (e) {
     if (e.target && e.target.name === "transitionType") {
       transitionType = e.target.value;
-      if (transitionType === "none") {
+      if (transitionType === "none" || transitionType === "switch") {
         transitionExtra.style.display = "none";
       } else {
         transitionExtra.style.display = "block";
@@ -1160,7 +1282,15 @@
   setCurrentColorFromRGB(255, 255, 255);
   clampMatrixSize();
   initFramesData();
+  resizePixelCanvas();
   updateColorFromCMYK();
   transitionIntensityValue.textContent = String(transitionIntensity);
   updatePreviewAndExport();
+
+  window.addEventListener("resize", function () {
+    resizePixelCanvas();
+    if (!previewPlaying && previewFrames.length) {
+      drawSimulator(previewFrames[previewCurrentFrameIndex]);
+    }
+  });
 })();
