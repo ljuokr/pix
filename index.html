@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeoPixel-Matrix Konverter & Maler</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>NeoPixel-Matrix Konverter & Maler</h1>
+  <p class="subtitle">Konvertiere Bilder, justiere sie für deine LED-Matrix, male Pixel nach und teste Animationen direkt im Browser.</p>
+</header>
+
+<div class="container">
+<div class="row">
+  <!-- Panel 1: Bild & Matrix -->
+  <div class="panel" style="flex:1 1 320px;">
+    <h2>1. Bild & Matrix</h2>
+
+    <section>
+      <label>
+        Bilddatei (JPEG/PNG):
+        <input type="file" id="fileInput" accept="image/*">
+      </label>
+
+      <div class="inline-row">
+        <label style="flex:1;">
+          Matrix-Breite (Pixel):
+          <input type="number" id="matrixWidth" min="1" max="64" value="16">
+        </label>
+
+        <label style="flex:1;">
+          Matrix-Höhe (Pixel):
+          <input type="number" id="matrixHeight" min="1" max="64" value="16">
+        </label>
+      </div>
+
+      <label>
+        Skalierung:
+        <select id="fitMode">
+          <option value="cover">Fuellend mit Zuschnitt (cover)</option>
+          <option value="contain">Einpassen mit Rand (contain)</option>
+          <option value="stretch">Strecken auf Matrixgroesse (ohne Seitenverhaeltnis)</option>
+        </select>
+      </label>
+    </section>
+
+    <section>
+      <h3>Bildanpassungen</h3>
+      <label>
+        Gesamt-Helligkeit (0–100 %):
+        <input type="range" id="brightness" min="0" max="100" value="100">
+        <small><span id="brightnessValue">100</span> %</small>
+      </label>
+
+      <label>
+        Kontrast (0–200 %):
+        <input type="range" id="contrast" min="0" max="200" value="100">
+        <small><span id="contrastValue">100</span> %</small>
+      </label>
+
+      <label>
+        Saettigung (0–200 %):
+        <input type="range" id="saturation" min="0" max="200" value="100">
+        <small><span id="saturationValue">100</span> %</small>
+      </label>
+
+      <label>
+        Gamma (50–200 %):
+        <input type="range" id="gamma" min="50" max="200" value="100">
+        <small><span id="gammaValue">100</span> %</small>
+      </label>
+
+      <div class="checkbox-inline">
+        <input type="checkbox" id="invertColors">
+        <label for="invertColors" style="margin:0;font-size:0.85rem;">
+          Farben invertieren
+        </label>
+      </div>
+
+      <div class="checkbox-inline">
+        <input type="checkbox" id="mirrorH">
+        <label for="mirrorH" style="margin:0;font-size:0.85rem;">
+          Horizontal spiegeln
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h3>Status</h3>
+      <div id="message" style="margin-bottom:0.5rem;"></div>
+      <canvas id="workCanvas" width="16" height="16" style="display:none;"></canvas>
+    </section>
+
+    <div class="action-buttons">
+      <button id="resetBtn" type="button">Reset</button>
+      <button id="saveBtn" type="button">Save</button>
+      <button id="uploadBtn" type="button">Upload</button>
+      <input id="uploadInput" type="file" accept="text/plain,application/json" style="display:none;">
+    </div>
+  </div>
+
+  <div class="middle-column">
+    <div class="panel canvas-panel">
+      <canvas id="pixelCanvas" width="320" height="320"></canvas>
+      <small>Links-Klick oder Drag, um Pixel mit der gewählten Farbe zu bemalen.</small>
+    </div>
+
+    <!-- Panel 3: Farben -->
+    <div class="panel" style="flex:1 1 320px;">
+      <h2>3. Farben</h2>
+      <div class="color-tools">
+        <div class="color-tools-grid">
+          <div class="palette-wrapper">
+            <div id="colorPalette" class="palette"></div>
+          </div>
+          <div class="color-readout">
+            <div class="inline-row" style="margin-bottom:0;">
+              <div id="selectedColorPreview" class="color-preview"></div>
+              <small id="selectedColorLabel">R:255 G:255 B:255</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Simulator & Animation -->
+  <div class="panel" style="flex:1 1 320px;">
+    <h2>2. Simulator & Animation</h2>
+
+    <h3 style="font-size:0.95rem;margin-top:0;">Frames</h3>
+
+    <label>
+      Anzahl Frames:
+      <input type="range" id="frameCount" min="1" max="12" value="1">
+      <small><span id="frameCountValue">1</span></small>
+    </label>
+
+    <label>
+      Anzeigedauer aktueller Frame (ms):
+      <input type="range" id="frameDuration" min="50" max="2000" value="500">
+      <small><span id="frameDurationValue">500</span> ms</small>
+    </label>
+
+    <div id="frameButtons"
+         style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.3rem;"></div>
+
+    <button id="duplicateFrameBtn" type="button">Aktuellen Frame duplizieren</button>
+
+    <h3 style="font-size:0.95rem;margin-top:0.75rem;">Übergang</h3>
+
+    <div id="transitionTypeContainer"
+         style="display:flex;flex-wrap:wrap;gap:0.4rem;font-size:0.85rem;">
+      <label><input type="radio" name="transitionType" value="none" checked> keiner</label>
+      <label><input type="radio" name="transitionType" value="fadeSlow"> Überblenden langsam</label>
+      <label><input type="radio" name="transitionType" value="fadeFast"> Überblenden schnell</label>
+      <label><input type="radio" name="transitionType" value="scroll"> rollend</label>
+      <label><input type="radio" name="transitionType" value="switch"> wechseln</label>
+    </div>
+
+    <div id="transitionExtra" style="display:none;margin-top:0.4rem;">
+      <label>
+        Übergangsintensität:
+        <input type="range" id="transitionIntensity" min="1" max="10" value="5">
+        <small><span id="transitionIntensityValue">5</span></small>
+      </label>
+    </div>
+
+    <div class="sim-controls">
+      <button id="playPauseBtn" type="button">▶ Animation starten</button>
+      <small id="currentFrameInfo">Frame 1 / 1</small>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 4: Code -->
+<div class="panel full-width">
+  <h2>4. Vollstaendiger Code</h2>
+
+  <label for="boardSelect">Zielplattform:</label>
+  <select id="boardSelect">
+    <option value="arduino">Arduino / C++ (Adafruit_NeoPixel)</option>
+    <option value="microbit">micro:bit – MakeCode (TypeScript / JavaScript)</option>
+  </select>
+
+  <textarea id="output" rows="22" spellcheck="false"></textarea>
+  <button id="copyBtn">In Zwischenablage kopieren</button>
+  <small id="copyStatus"></small>
+
+  <p><small>
+    Die Ausgabe ist ein vollstaendiger Sketch bzw. TypeScript-Code.
+    In Arduino IDE bzw. MakeCode einfuegen (in MakeCode vorher NeoPixel-Erweiterung hinzufuegen) und flashen.
+  </small></p>
+</div>
+</div>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
