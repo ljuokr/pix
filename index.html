@@ -15,9 +15,9 @@
 
 <div class="container">
 <div class="row">
-  <!-- Panel 1: Bild, Matrix, Farbe -->
+  <!-- Panel 1: Bild & Matrix -->
   <div class="panel" style="flex:1 1 320px;">
-    <h2>1. Bild, Matrix & Farbe</h2>
+    <h2>1. Bild & Matrix</h2>
 
     <section>
       <label>
@@ -37,13 +37,6 @@
         </label>
       </div>
 
-      <div class="checkbox-inline">
-        <input type="checkbox" id="serpentine" checked>
-        <label for="serpentine" style="margin:0;font-size:0.85rem;">
-          Zeilen serpentin (Zickzack-Verdrahtung)
-        </label>
-      </div>
-
       <label>
         Skalierung:
         <select id="fitMode">
@@ -60,24 +53,6 @@
         Gesamt-Helligkeit (0–100 %):
         <input type="range" id="brightness" min="0" max="100" value="100">
         <small><span id="brightnessValue">100</span> %</small>
-      </label>
-
-      <label>
-        Rot-Faktor (0–200 %):
-        <input type="range" id="redFactor" min="0" max="200" value="100">
-        <small><span id="redValue">100</span> %</small>
-      </label>
-
-      <label>
-        Gruen-Faktor (0–200 %):
-        <input type="range" id="greenFactor" min="0" max="200" value="100">
-        <small><span id="greenValue">100</span> %</small>
-      </label>
-
-      <label>
-        Blau-Faktor (0–200 %):
-        <input type="range" id="blueFactor" min="0" max="200" value="100">
-        <small><span id="blueValue">100</span> %</small>
       </label>
 
       <label>
@@ -114,118 +89,104 @@
     </section>
 
     <section>
-      <h3>Vorschau & Status</h3>
+      <h3>Status</h3>
       <div id="message" style="margin-bottom:0.5rem;"></div>
-      <canvas id="sourcePreview" width="160" height="160" style="border:1px solid #ccc;"></canvas>
       <canvas id="workCanvas" width="16" height="16" style="display:none;"></canvas>
     </section>
   </div>
 
-  <!-- Panel 2: Simulator & Animation -->
+  <div class="middle-column">
+    <div class="panel canvas-panel">
+      <canvas id="pixelCanvas" width="320" height="320"></canvas>
+      <small>Links-Klick oder Drag, um Pixel mit der gewählten Farbe zu bemalen.</small>
+    </div>
+
+    <!-- Panel 2: Simulator & Animation -->
+    <div class="panel" style="flex:1 1 320px;">
+      <h2>2. Simulator & Animation</h2>
+
+      <h3 style="font-size:0.95rem;margin-top:0;">Frames</h3>
+
+      <label>
+        Anzahl Frames:
+        <input type="range" id="frameCount" min="1" max="12" value="1">
+        <small><span id="frameCountValue">1</span></small>
+      </label>
+
+      <label>
+        Anzeigedauer aktueller Frame (ms):
+        <input type="range" id="frameDuration" min="50" max="2000" value="500">
+        <small><span id="frameDurationValue">500</span> ms</small>
+      </label>
+
+      <div id="frameButtons"
+           style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.3rem;"></div>
+
+      <button id="duplicateFrameBtn" type="button">Aktuellen Frame duplizieren</button>
+
+      <h3 style="font-size:0.95rem;margin-top:0.75rem;">Übergang</h3>
+
+      <div id="transitionTypeContainer"
+           style="display:flex;flex-wrap:wrap;gap:0.4rem;font-size:0.85rem;">
+        <label><input type="radio" name="transitionType" value="none" checked> keiner</label>
+        <label><input type="radio" name="transitionType" value="fadeSlow"> Überblenden langsam</label>
+        <label><input type="radio" name="transitionType" value="fadeFast"> Überblenden schnell</label>
+        <label><input type="radio" name="transitionType" value="scroll"> rollend</label>
+        <label><input type="radio" name="transitionType" value="switch"> wechseln</label>
+      </div>
+
+      <div id="transitionExtra" style="display:none;margin-top:0.4rem;">
+        <label>
+          Übergangsintensität:
+          <input type="range" id="transitionIntensity" min="1" max="10" value="5">
+          <small><span id="transitionIntensityValue">5</span></small>
+        </label>
+      </div>
+
+      <div class="sim-controls">
+        <button id="playPauseBtn" type="button">▶ Animation starten</button>
+        <small id="currentFrameInfo">Frame 1 / 1</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 3: Farben -->
   <div class="panel" style="flex:1 1 320px;">
-    <h2>2. Simulator & Animation</h2>
-    <section class="color-tools">
-      <h3>Pixel & Farbe</h3>
+    <h2>3. Farben</h2>
+    <div class="color-tools">
       <div class="color-tools-grid">
         <div class="palette-wrapper">
           <div id="colorPalette" class="palette"></div>
         </div>
         <div class="color-readout">
-          <div class="inline-row" style="margin-bottom:0.35rem;">
+          <div class="inline-row" style="margin-bottom:0;">
             <div id="selectedColorPreview" class="color-preview"></div>
             <small id="selectedColorLabel">R:255 G:255 B:255</small>
           </div>
-
-          <label style="margin-bottom:0.35rem;">CMYK-Farbe:</label>
-          <label>
-            Cyan (0–100 %):
-            <input type="range" id="cSlider" min="0" max="100" value="0">
-            <small><span id="cValue">0</span> %</small>
-          </label>
-          <label>
-            Magenta (0–100 %):
-            <input type="range" id="mSlider" min="0" max="100" value="0">
-            <small><span id="mValue">0</span> %</small>
-          </label>
-          <label>
-            Yellow (0–100 %):
-            <input type="range" id="ySlider" min="0" max="100" value="0">
-            <small><span id="yValue">0</span> %</small>
-          </label>
-          <label style="margin-bottom:0;">
-            Key/Black (0–100 %):
-            <input type="range" id="kSlider" min="0" max="100" value="0">
-            <small><span id="kValue">0</span> %</small>
-          </label>
         </div>
       </div>
-    </section>
-    <canvas id="pixelCanvas" width="320" height="320"></canvas>
-    <small>Links-Klick oder Drag, um Pixel mit der gewählten Farbe zu bemalen.</small>
-
-    <h3 style="font-size:0.95rem;margin-top:0.75rem;">Frames</h3>
-
-    <label>
-      Anzahl Frames:
-      <input type="range" id="frameCount" min="1" max="12" value="1">
-      <small><span id="frameCountValue">1</span></small>
-    </label>
-
-    <label>
-      Anzeigedauer aktueller Frame (ms):
-      <input type="range" id="frameDuration" min="50" max="2000" value="500">
-      <small><span id="frameDurationValue">500</span> ms</small>
-    </label>
-
-    <div id="frameButtons"
-         style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.3rem;"></div>
-
-    <button id="duplicateFrameBtn" type="button">Aktuellen Frame duplizieren</button>
-
-    <h3 style="font-size:0.95rem;margin-top:0.75rem;">Übergang</h3>
-
-    <div id="transitionTypeContainer"
-         style="display:flex;flex-wrap:wrap;gap:0.4rem;font-size:0.85rem;">
-      <label><input type="radio" name="transitionType" value="none" checked> keiner</label>
-      <label><input type="radio" name="transitionType" value="fadeSlow"> Überblenden langsam</label>
-      <label><input type="radio" name="transitionType" value="fadeFast"> Überblenden schnell</label>
-      <label><input type="radio" name="transitionType" value="scroll"> rollend</label>
-      <label><input type="radio" name="transitionType" value="switch"> wechseln</label>
-    </div>
-
-    <div id="transitionExtra" style="display:none;margin-top:0.4rem;">
-      <label>
-        Übergangsintensität:
-        <input type="range" id="transitionIntensity" min="1" max="10" value="5">
-        <small><span id="transitionIntensityValue">5</span></small>
-      </label>
-    </div>
-
-    <div class="sim-controls">
-      <button id="playPauseBtn" type="button">▶ Animation starten</button>
-      <small id="currentFrameInfo">Frame 1 / 1</small>
     </div>
   </div>
+</div>
 
-  <!-- Panel 3: Code -->
-  <div class="panel" style="flex:1 1 320px;">
-    <h2>3. Vollstaendiger Code</h2>
+<!-- Panel 4: Code -->
+<div class="panel full-width">
+  <h2>4. Vollstaendiger Code</h2>
 
-    <label for="boardSelect">Zielplattform:</label>
-    <select id="boardSelect">
-      <option value="arduino">Arduino / C++ (Adafruit_NeoPixel)</option>
-      <option value="microbit">micro:bit – MakeCode (TypeScript / JavaScript)</option>
-    </select>
+  <label for="boardSelect">Zielplattform:</label>
+  <select id="boardSelect">
+    <option value="arduino">Arduino / C++ (Adafruit_NeoPixel)</option>
+    <option value="microbit">micro:bit – MakeCode (TypeScript / JavaScript)</option>
+  </select>
 
-    <textarea id="output" rows="22" spellcheck="false"></textarea>
-    <button id="copyBtn">In Zwischenablage kopieren</button>
-    <small id="copyStatus"></small>
+  <textarea id="output" rows="22" spellcheck="false"></textarea>
+  <button id="copyBtn">In Zwischenablage kopieren</button>
+  <small id="copyStatus"></small>
 
-    <p><small>
-      Die Ausgabe ist ein vollstaendiger Sketch bzw. TypeScript-Code.  
-      In Arduino IDE bzw. MakeCode einfuegen (in MakeCode vorher NeoPixel-Erweiterung hinzufuegen) und flashen.
-    </small></p>
-  </div>
+  <p><small>
+    Die Ausgabe ist ein vollstaendiger Sketch bzw. TypeScript-Code.
+    In Arduino IDE bzw. MakeCode einfuegen (in MakeCode vorher NeoPixel-Erweiterung hinzufuegen) und flashen.
+  </small></p>
 </div>
 </div>
 <script src="assets/js/app.js"></script>

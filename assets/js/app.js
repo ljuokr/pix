@@ -5,16 +5,9 @@
 
   const matrixWidthInput = document.getElementById("matrixWidth");
   const matrixHeightInput = document.getElementById("matrixHeight");
-  const serpentineInput = document.getElementById("serpentine");
 
   const brightnessInput = document.getElementById("brightness");
   const brightnessValue = document.getElementById("brightnessValue");
-  const redFactorInput = document.getElementById("redFactor");
-  const redValue = document.getElementById("redValue");
-  const greenFactorInput = document.getElementById("greenFactor");
-  const greenValue = document.getElementById("greenValue");
-  const blueFactorInput = document.getElementById("blueFactor");
-  const blueValue = document.getElementById("blueValue");
 
   const contrastInput = document.getElementById("contrast");
   const contrastValue = document.getElementById("contrastValue");
@@ -29,15 +22,6 @@
   const paletteContainer = document.getElementById("colorPalette");
   const selectedColorPreview = document.getElementById("selectedColorPreview");
   const selectedColorLabel = document.getElementById("selectedColorLabel");
-
-  const cSlider = document.getElementById("cSlider");
-  const mSlider = document.getElementById("mSlider");
-  const ySlider = document.getElementById("ySlider");
-  const kSlider = document.getElementById("kSlider");
-  const cValue = document.getElementById("cValue");
-  const mValue = document.getElementById("mValue");
-  const yValue = document.getElementById("yValue");
-  const kValue = document.getElementById("kValue");
 
   const frameCountSlider = document.getElementById("frameCount");
   const frameCountValue = document.getElementById("frameCountValue");
@@ -54,7 +38,6 @@
   const playPauseBtn = document.getElementById("playPauseBtn");
   const currentFrameInfo = document.getElementById("currentFrameInfo");
 
-  const sourcePreview = document.getElementById("sourcePreview");
   const workCanvas = document.getElementById("workCanvas");
   const pixelCanvas = document.getElementById("pixelCanvas");
 
@@ -64,7 +47,6 @@
   const copyBtn = document.getElementById("copyBtn");
   const copyStatus = document.getElementById("copyStatus");
 
-  const srcPrevCtx = sourcePreview.getContext("2d");
   const workCtx = workCanvas.getContext("2d");
   const simCtx = pixelCanvas.getContext("2d");
 
@@ -92,10 +74,8 @@
 
   // Farbpalette
   const paletteColors = [
-    "#000000", "#ffffff", "#ff0000", "#00ff00",
-    "#0000ff", "#ffff00", "#ff00ff", "#00ffff",
-    "#800000", "#008000", "#000080", "#808000",
-    "#800080", "#008080", "#808080", "#c0c0c0"
+    "#ffffff", "#ff0000", "#00ff00", "#0000ff",
+    "#ffff00", "#ff00ff", "#00ffff", "#6b7280"
   ];
   let currentColor = { r: 255, g: 255, b: 255 };
   let selectedPaletteElement = null;
@@ -134,7 +114,7 @@
     for (let y = 0; y < matrixH; y++) {
       const row = [];
       for (let x = 0; x < matrixW; x++) {
-        row.push({ r: 220, g: 224, b: 228 });
+        row.push({ r: 120, g: 126, b: 134 });
       }
       arr.push(row);
     }
@@ -244,7 +224,6 @@
     framesData[currentFrame].basePixels = clonePixels(basePixels);
     framesData[currentFrame].overlayPixels = clonePixels(overlayPixels);
     lastImage = null;
-    srcPrevCtx.clearRect(0, 0, sourcePreview.width, sourcePreview.height);
   }
 
   function loadImageFromFile(file) {
@@ -259,7 +238,6 @@
       const img = new Image();
       img.onload = function () {
         lastImage = img;
-        drawSourcePreview(img);
         processImageToMatrix(img);
       };
       img.onerror = function () {
@@ -271,31 +249,6 @@
       message.textContent = "Fehler beim Lesen der Datei.";
     };
     reader.readAsDataURL(file);
-  }
-
-  function drawSourcePreview(img) {
-    const w = sourcePreview.width;
-    const h = sourcePreview.height;
-    srcPrevCtx.clearRect(0, 0, w, h);
-    srcPrevCtx.fillStyle = "#eee";
-    srcPrevCtx.fillRect(0, 0, w, h);
-
-    const aspectImg = img.width / img.height;
-    const aspectCanvas = w / h;
-    let drawW, drawH, dx, dy;
-
-    if (aspectImg > aspectCanvas) {
-      drawW = w;
-      drawH = w / aspectImg;
-      dx = 0;
-      dy = (h - drawH) / 2;
-    } else {
-      drawH = h;
-      drawW = h * aspectImg;
-      dy = 0;
-      dx = (w - drawW) / 2;
-    }
-    srcPrevCtx.drawImage(img, dx, dy, drawW, drawH);
   }
 
   function processImageToMatrix(img) {
@@ -366,9 +319,6 @@
   function getSliderValues() {
     return {
       brightness: parseInt(brightnessInput.value, 10) || 0,
-      red: parseInt(redFactorInput.value, 10) || 0,
-      green: parseInt(greenFactorInput.value, 10) || 0,
-      blue: parseInt(blueFactorInput.value, 10) || 0,
       contrast: parseInt(contrastInput.value, 10) || 0,
       saturation: parseInt(saturationInput.value, 10) || 0,
       gamma: parseInt(gammaInput.value, 10) || 0,
@@ -379,9 +329,6 @@
 
   function updateSliderLabels(s) {
     brightnessValue.textContent = String(s.brightness);
-    redValue.textContent = String(s.red);
-    greenValue.textContent = String(s.green);
-    blueValue.textContent = String(s.blue);
     contrastValue.textContent = String(s.contrast);
     saturationValue.textContent = String(s.saturation);
     gammaValue.textContent = String(s.gamma);
@@ -392,9 +339,6 @@
     if (!base) return null;
 
     const bf = s.brightness / 100;
-    const rf = s.red / 100;
-    const gf = s.green / 100;
-    const bfBlue = s.blue / 100;
 
     const cf = s.contrast / 100;
     const sf = s.saturation / 100;
@@ -412,9 +356,9 @@
         const srcX = mirrorH ? (matrixW - 1 - x) : x;
         const p = base[srcY][srcX];
 
-        let r = (p.r / 255) * bf * rf;
-        let g = (p.g / 255) * bf * gf;
-        let b = (p.b / 255) * bf * bfBlue;
+        let r = (p.r / 255) * bf;
+        let g = (p.g / 255) * bf;
+        let b = (p.b / 255) * bf;
 
         r = Math.max(0, Math.min(1, r));
         g = Math.max(0, Math.min(1, g));
@@ -484,7 +428,7 @@
     simCtx.fillStyle = "#0d1628";
     simCtx.fillRect(0, 0, pixelCanvas.width, pixelCanvas.height);
 
-    const neutral = { r: 220, g: 224, b: 228 };
+    const neutral = { r: 96, g: 102, b: 110 };
 
     for (let y = 0; y < matrixH; y++) {
       for (let x = 0; x < matrixW; x++) {
@@ -536,16 +480,11 @@
 
   // Export-Helfer
   function flattenToSerpentineRGB(pixels) {
-    const serp = serpentineInput.checked;
     const flat = [];
     for (let y = 0; y < matrixH; y++) {
       for (let x = 0; x < matrixW; x++) {
         const p = pixels[y][x];
-        let wireX = x;
-        if (serp && (y % 2 === 1)) {
-          wireX = matrixW - 1 - x;
-        }
-        const idx = y * matrixW + wireX;
+        const idx = y * matrixW + x;
         flat[idx] = { r: p.r, g: p.g, b: p.b, x: x, y: y, i: idx };
       }
     }
@@ -577,7 +516,6 @@
   function exportArduino(allFrames) {
     const total = matrixW * matrixH;
     const nf = allFrames.length;
-    const serp = serpentineInput.checked;
     const lines = [];
 
     const durations = [];
@@ -588,7 +526,7 @@
     lines.push("#include <Adafruit_NeoPixel.h>");
     lines.push("");
     lines.push("// Auto-generiert von NeoPixel Matrix Converter & Painter");
-    lines.push("// Matrix: " + matrixW + " x " + matrixH + ", Serpentin: " + (serp ? "true" : "false"));
+    lines.push("// Matrix: " + matrixW + " x " + matrixH);
     lines.push("");
     lines.push("#define PIN 6  // NeoPixel-Datenpin");
     lines.push("");
@@ -717,7 +655,6 @@
   function exportMicrobitTS(allFrames) {
     const total = matrixW * matrixH;
     const nf = allFrames.length;
-    const serp = serpentineInput.checked;
     const lines = [];
 
     const durations = [];
@@ -1051,7 +988,7 @@
   }
 
   function buildPalette() {
-    paletteColors.forEach(function (hex) {
+    paletteColors.forEach(function (hex, idx) {
       const swatch = document.createElement("div");
       swatch.style.width = "1.4rem";
       swatch.style.height = "1.4rem";
@@ -1069,25 +1006,10 @@
         selectedPaletteElement = swatch;
       });
       paletteContainer.appendChild(swatch);
+      if (idx === 0) {
+        swatch.click();
+      }
     });
-  }
-
-  function updateColorFromCMYK() {
-    const c = (parseInt(cSlider.value, 10) || 0) / 100;
-    const m = (parseInt(mSlider.value, 10) || 0) / 100;
-    const y = (parseInt(ySlider.value, 10) || 0) / 100;
-    const k = (parseInt(kSlider.value, 10) || 0) / 100;
-
-    cValue.textContent = (c * 100).toFixed(0);
-    mValue.textContent = (m * 100).toFixed(0);
-    yValue.textContent = (y * 100).toFixed(0);
-    kValue.textContent = (k * 100).toFixed(0);
-
-    const r = Math.round(255 * (1 - Math.min(1, c + k)));
-    const g = Math.round(255 * (1 - Math.min(1, m + k)));
-    const b = Math.round(255 * (1 - Math.min(1, y + k)));
-
-    setCurrentColorFromRGB(r, g, b);
   }
 
   // Malen
@@ -1134,9 +1056,6 @@
   });
 
   brightnessInput.addEventListener("input", updatePreviewAndExport);
-  redFactorInput.addEventListener("input", updatePreviewAndExport);
-  greenFactorInput.addEventListener("input", updatePreviewAndExport);
-  blueFactorInput.addEventListener("input", updatePreviewAndExport);
   contrastInput.addEventListener("input", updatePreviewAndExport);
   saturationInput.addEventListener("input", updatePreviewAndExport);
   gammaInput.addEventListener("input", updatePreviewAndExport);
@@ -1144,7 +1063,6 @@
   mirrorHInput.addEventListener("change", updatePreviewAndExport);
 
   boardSelect.addEventListener("change", updatePreviewAndExport);
-  serpentineInput.addEventListener("change", updatePreviewAndExport);
 
   matrixWidthInput.addEventListener("change", function () {
     clampMatrixSize();
@@ -1157,11 +1075,6 @@
     initFramesData();
     updatePreviewAndExport();
   });
-
-  cSlider.addEventListener("input", updateColorFromCMYK);
-  mSlider.addEventListener("input", updateColorFromCMYK);
-  ySlider.addEventListener("input", updateColorFromCMYK);
-  kSlider.addEventListener("input", updateColorFromCMYK);
 
   frameCountSlider.addEventListener("input", function () {
     let val = parseInt(frameCountSlider.value, 10) || 1;
@@ -1279,11 +1192,9 @@
 
   // Initialisierung
   buildPalette();
-  setCurrentColorFromRGB(255, 255, 255);
   clampMatrixSize();
   initFramesData();
   resizePixelCanvas();
-  updateColorFromCMYK();
   transitionIntensityValue.textContent = String(transitionIntensity);
   updatePreviewAndExport();
 
