@@ -5,42 +5,90 @@
   <meta charset="UTF-8">
   <title>NeoPixel Matrix Converter & Painter</title>
   <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-border: #1f2937;
+      --accent: #38bdf8;
+      --text: #e5e7eb;
+      --subtext: #94a3b8;
+      --input-bg: #0b1220;
+      --input-border: #233044;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      margin: 1rem;
+      margin: 0;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.06), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.05), transparent 30%),
+                  var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.25rem;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
     h1 {
-      font-size: 1.4rem;
-      margin: 0 0 0.5rem 0;
+      font-size: 1.6rem;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      color: var(--subtext);
+      margin: 0;
+      max-width: 740px;
+      line-height: 1.5;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 1200px;
+      margin: 0 auto 1rem;
     }
 
     .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
+      align-items: start;
     }
 
     .panel {
-      border: 1px solid #ccc;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      min-width: 260px;
+      border: 1px solid var(--panel-border);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--panel);
+      padding: 0.9rem 1rem 1rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      min-height: 100%;
     }
 
     .panel h2 {
       margin: 0 0 0.5rem 0;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
     }
 
     label {
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
       font-size: 0.9rem;
+      color: var(--text);
     }
 
     input[type="file"],
@@ -48,44 +96,81 @@
     input[type="number"],
     input[type="range"] {
       width: 100%;
-      box-sizing: border-box;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.55rem;
+      font-size: 0.9rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--accent);
+      background: transparent;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
     }
 
     #pixelCanvas {
-      border: 1px solid #999;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
       image-rendering: pixelated;
       display: block;
       touch-action: none;
+      margin-bottom: 0.25rem;
     }
 
     #output {
       width: 100%;
       box-sizing: border-box;
       font-family: "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      background: var(--input-bg);
+      color: #cbd5e1;
+      border: 1px solid var(--input-border);
+      border-radius: 0.6rem;
+      padding: 0.75rem;
     }
 
     button {
-      padding: 0.3rem 0.6rem;
-      border-radius: 0.4rem;
-      border: 1px solid #888;
-      background: #eee;
+      padding: 0.4rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--accent);
+      background: linear-gradient(120deg, #38bdf8, #22d3ee);
+      color: #0b1220;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.2s ease;
+      box-shadow: 0 8px 20px rgba(34, 211, 238, 0.25);
     }
 
     button:hover {
-      background: #ddd;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(34, 211, 238, 0.35);
+      filter: brightness(1.05);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(34, 211, 238, 0.25);
     }
 
     small {
-      font-size: 0.75rem;
-      color: #555;
+      font-size: 0.78rem;
+      color: var(--subtext);
     }
 
     #message {
       font-size: 0.85rem;
-      color: #a00;
+      color: #f59e0b;
       min-height: 1.2em;
     }
 
@@ -99,152 +184,190 @@
     .sim-controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.6rem;
       align-items: center;
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .panel section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--panel-border);
+      border-radius: 0.65rem;
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .panel section h3 {
+      margin: 0 0 0.4rem 0;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(8, 1.4rem);
+      gap: 0.25rem;
+      justify-content: center;
+    }
+
+    .inline-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
     }
   </style>
 </head>
 <body>
 
-<h1>NeoPixel Matrix Converter & Painter</h1>
+<header>
+  <h1>NeoPixel Matrix Converter & Painter</h1>
+  <p class="subtitle">Konvertiere Bilder, justiere sie fuer deine LED-Matrix, male Pixel nach und teste Animationen direkt im Browser.</p>
+</header>
 
+<div class="container">
 <div class="row">
   <!-- Panel 1: Bild, Matrix, Farbe -->
   <div class="panel" style="flex:1 1 320px;">
     <h2>1. Bild, Matrix & Farbe</h2>
 
-    <label>
-      Bilddatei (JPEG/PNG):
-      <input type="file" id="fileInput" accept="image/*">
-    </label>
-
-    <label>
-      Matrix-Breite (Pixel):
-      <input type="number" id="matrixWidth" min="1" max="64" value="16">
-    </label>
-
-    <label>
-      Matrix-Hoehe (Pixel):
-      <input type="number" id="matrixHeight" min="1" max="64" value="16">
-    </label>
-
-    <div class="checkbox-inline">
-      <input type="checkbox" id="serpentine" checked>
-      <label for="serpentine" style="margin:0;font-size:0.85rem;">
-        Zeilen serpentin (Zickzack-Verdrahtung)
+    <section>
+      <label>
+        Bilddatei (JPEG/PNG):
+        <input type="file" id="fileInput" accept="image/*">
       </label>
-    </div>
 
-    <label>
-      Skalierung:
-      <select id="fitMode">
-        <option value="cover">Fuellend mit Zuschnitt (cover)</option>
-        <option value="contain">Einpassen mit Rand (contain)</option>
-        <option value="stretch">Strecken auf Matrixgroesse (ohne Seitenverhaeltnis)</option>
-      </select>
-    </label>
+      <div class="inline-row">
+        <label style="flex:1;">
+          Matrix-Breite (Pixel):
+          <input type="number" id="matrixWidth" min="1" max="64" value="16">
+        </label>
 
-    <label>
-      Gesamt-Helligkeit (0–100 %):
-      <input type="range" id="brightness" min="0" max="100" value="100">
-      <small><span id="brightnessValue">100</span> %</small>
-    </label>
-
-    <label>
-      Rot-Faktor (0–200 %):
-      <input type="range" id="redFactor" min="0" max="200" value="100">
-      <small><span id="redValue">100</span> %</small>
-    </label>
-
-    <label>
-      Gruen-Faktor (0–200 %):
-      <input type="range" id="greenFactor" min="0" max="200" value="100">
-      <small><span id="greenValue">100</span> %</small>
-    </label>
-
-    <label>
-      Blau-Faktor (0–200 %):
-      <input type="range" id="blueFactor" min="0" max="200" value="100">
-      <small><span id="blueValue">100</span> %</small>
-    </label>
-
-    <label>
-      Kontrast (0–200 %):
-      <input type="range" id="contrast" min="0" max="200" value="100">
-      <small><span id="contrastValue">100</span> %</small>
-    </label>
-
-    <label>
-      Saettigung (0–200 %):
-      <input type="range" id="saturation" min="0" max="200" value="100">
-      <small><span id="saturationValue">100</span> %</small>
-    </label>
-
-    <label>
-      Gamma (50–200 %):
-      <input type="range" id="gamma" min="50" max="200" value="100">
-      <small><span id="gammaValue">100</span> %</small>
-    </label>
-
-    <div class="checkbox-inline">
-      <input type="checkbox" id="invertColors">
-      <label for="invertColors" style="margin:0;font-size:0.85rem;">
-        Farben invertieren
-      </label>
-    </div>
-
-    <div class="checkbox-inline">
-      <input type="checkbox" id="mirrorH">
-      <label for="mirrorH" style="margin:0;font-size:0.85rem;">
-        Horizontal spiegeln
-      </label>
-    </div>
-
-    <h3 style="font-size:0.95rem;margin-top:0.75rem;">Pixel bearbeiten</h3>
-
-    <div style="display:flex;justify-content:center;margin-bottom:0.5rem;">
-      <div id="colorPalette"
-           style="display:grid;grid-template-columns:repeat(8,1.4rem);gap:0.25rem;">
+        <label style="flex:1;">
+          Matrix-Hoehe (Pixel):
+          <input type="number" id="matrixHeight" min="1" max="64" value="16">
+        </label>
       </div>
-    </div>
 
-    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
-      <div id="selectedColorPreview"
-           style="width:1.6rem;height:1.6rem;border:1px solid #000;"></div>
-      <small id="selectedColorLabel">R:255 G:255 B:255</small>
-    </div>
+      <div class="checkbox-inline">
+        <input type="checkbox" id="serpentine" checked>
+        <label for="serpentine" style="margin:0;font-size:0.85rem;">
+          Zeilen serpentin (Zickzack-Verdrahtung)
+        </label>
+      </div>
 
-    <label>CMYK-Farbe:</label>
+      <label>
+        Skalierung:
+        <select id="fitMode">
+          <option value="cover">Fuellend mit Zuschnitt (cover)</option>
+          <option value="contain">Einpassen mit Rand (contain)</option>
+          <option value="stretch">Strecken auf Matrixgroesse (ohne Seitenverhaeltnis)</option>
+        </select>
+      </label>
+    </section>
 
-    <label>
-      Cyan (0–100 %):
-      <input type="range" id="cSlider" min="0" max="100" value="0">
-      <small><span id="cValue">0</span> %</small>
-    </label>
+    <section>
+      <h3>Bildanpassungen</h3>
+      <label>
+        Gesamt-Helligkeit (0–100 %):
+        <input type="range" id="brightness" min="0" max="100" value="100">
+        <small><span id="brightnessValue">100</span> %</small>
+      </label>
 
-    <label>
-      Magenta (0–100 %):
-      <input type="range" id="mSlider" min="0" max="100" value="0">
-      <small><span id="mValue">0</span> %</small>
-    </label>
+      <label>
+        Rot-Faktor (0–200 %):
+        <input type="range" id="redFactor" min="0" max="200" value="100">
+        <small><span id="redValue">100</span> %</small>
+      </label>
 
-    <label>
-      Yellow (0–100 %):
-      <input type="range" id="ySlider" min="0" max="100" value="0">
-      <small><span id="yValue">0</span> %</small>
-    </label>
+      <label>
+        Gruen-Faktor (0–200 %):
+        <input type="range" id="greenFactor" min="0" max="200" value="100">
+        <small><span id="greenValue">100</span> %</small>
+      </label>
 
-    <label>
-      Key/Black (0–100 %):
-      <input type="range" id="kSlider" min="0" max="100" value="0">
-      <small><span id="kValue">0</span> %</small>
-    </label>
+      <label>
+        Blau-Faktor (0–200 %):
+        <input type="range" id="blueFactor" min="0" max="200" value="100">
+        <small><span id="blueValue">100</span> %</small>
+      </label>
 
-    <div id="message" style="margin-top:0.5rem;"></div>
+      <label>
+        Kontrast (0–200 %):
+        <input type="range" id="contrast" min="0" max="200" value="100">
+        <small><span id="contrastValue">100</span> %</small>
+      </label>
 
-    <canvas id="sourcePreview" width="160" height="160" style="border:1px solid #ccc;"></canvas>
-    <canvas id="workCanvas" width="16" height="16" style="display:none;"></canvas>
+      <label>
+        Saettigung (0–200 %):
+        <input type="range" id="saturation" min="0" max="200" value="100">
+        <small><span id="saturationValue">100</span> %</small>
+      </label>
+
+      <label>
+        Gamma (50–200 %):
+        <input type="range" id="gamma" min="50" max="200" value="100">
+        <small><span id="gammaValue">100</span> %</small>
+      </label>
+
+      <div class="checkbox-inline">
+        <input type="checkbox" id="invertColors">
+        <label for="invertColors" style="margin:0;font-size:0.85rem;">
+          Farben invertieren
+        </label>
+      </div>
+
+      <div class="checkbox-inline">
+        <input type="checkbox" id="mirrorH">
+        <label for="mirrorH" style="margin:0;font-size:0.85rem;">
+          Horizontal spiegeln
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h3>Pixel bearbeiten</h3>
+      <div style="display:flex;justify-content:center;margin-bottom:0.5rem;">
+        <div id="colorPalette" class="palette"></div>
+      </div>
+
+      <div class="inline-row" style="margin-bottom:0.5rem;">
+        <div id="selectedColorPreview"
+             style="width:1.6rem;height:1.6rem;border:1px solid #000;"></div>
+        <small id="selectedColorLabel">R:255 G:255 B:255</small>
+      </div>
+
+      <label>CMYK-Farbe:</label>
+
+      <label>
+        Cyan (0–100 %):
+        <input type="range" id="cSlider" min="0" max="100" value="0">
+        <small><span id="cValue">0</span> %</small>
+      </label>
+
+      <label>
+        Magenta (0–100 %):
+        <input type="range" id="mSlider" min="0" max="100" value="0">
+        <small><span id="mValue">0</span> %</small>
+      </label>
+
+      <label>
+        Yellow (0–100 %):
+        <input type="range" id="ySlider" min="0" max="100" value="0">
+        <small><span id="yValue">0</span> %</small>
+      </label>
+
+      <label>
+        Key/Black (0–100 %):
+        <input type="range" id="kSlider" min="0" max="100" value="0">
+        <small><span id="kValue">0</span> %</small>
+      </label>
+
+      <div id="message" style="margin-top:0.5rem;"></div>
+
+      <canvas id="sourcePreview" width="160" height="160" style="border:1px solid #ccc;"></canvas>
+      <canvas id="workCanvas" width="16" height="16" style="display:none;"></canvas>
+    </section>
   </div>
 
   <!-- Panel 2: Simulator & Animation -->
@@ -316,6 +439,7 @@
       In Arduino IDE bzw. MakeCode einfuegen (in MakeCode vorher NeoPixel-Erweiterung hinzufuegen) und flashen.
     </small></p>
   </div>
+</div>
 </div>
 
 <script>
