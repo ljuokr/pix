@@ -102,6 +102,13 @@
       letter-spacing: -0.01em;
     }
 
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+
     label {
       display: block;
       margin-bottom: 0.6rem;

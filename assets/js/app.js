@@ -41,6 +41,11 @@
   const workCanvas = document.getElementById("workCanvas");
   const pixelCanvas = document.getElementById("pixelCanvas");
 
+  const resetBtn = document.getElementById("resetBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const uploadInput = document.getElementById("uploadInput");
+
   const boardSelect = document.getElementById("boardSelect");
   const output = document.getElementById("output");
   const message = document.getElementById("message");
@@ -114,7 +119,7 @@
     for (let y = 0; y < matrixH; y++) {
       const row = [];
       for (let x = 0; x < matrixW; x++) {
-        row.push({ r: 120, g: 126, b: 134 });
+        row.push({ r: 88, g: 92, b: 100 });
       }
       arr.push(row);
     }
@@ -161,6 +166,180 @@
     frameDurationSlider.value = framesData[0].duration;
     frameDurationValue.textContent = String(framesData[0].duration);
     updateFrameButtons();
+  }
+
+  function setTransitionRadio(value) {
+    let found = false;
+    const radios = transitionTypeContainer.querySelectorAll("input[name='transitionType']");
+    radios.forEach(function (r) {
+      if (r.value === value) {
+        r.checked = true;
+        found = true;
+      } else {
+        r.checked = false;
+      }
+    });
+    if (!found) {
+      radios.forEach(function (r) {
+        if (r.value === "none") {
+          r.checked = true;
+        }
+      });
+      value = "none";
+    }
+    transitionType = value;
+    if (transitionType === "none" || transitionType === "switch") {
+      transitionExtra.style.display = "none";
+    } else {
+      transitionExtra.style.display = "block";
+    }
+  }
+
+  function normalizeBasePixels(source) {
+    const target = makeEmptyBase();
+    if (!source) return target;
+    for (let y = 0; y < Math.min(matrixH, source.length); y++) {
+      for (let x = 0; x < Math.min(matrixW, source[y].length); x++) {
+        const p = source[y][x];
+        if (p) {
+          target[y][x] = { r: p.r ?? 0, g: p.g ?? 0, b: p.b ?? 0 };
+        }
+      }
+    }
+    return target;
+  }
+
+  function normalizeOverlayPixels(source) {
+    const target = makeEmptyOverlay();
+    if (!source) return target;
+    for (let y = 0; y < Math.min(matrixH, source.length); y++) {
+      for (let x = 0; x < Math.min(matrixW, source[y].length); x++) {
+        const p = source[y][x];
+        if (p) {
+          target[y][x] = { r: p.r ?? 0, g: p.g ?? 0, b: p.b ?? 0 };
+        }
+      }
+    }
+    return target;
+  }
+
+  function snapshotSettings() {
+    saveCurrentFrame();
+
+    const sliders = getSliderValues();
+    const frames = [];
+    for (let i = 0; i < numFrames; i++) {
+      const f = framesData[i];
+      frames.push({
+        base: f.basePixels || makeEmptyBase(),
+        overlay: f.overlayPixels || makeEmptyOverlay(),
+        duration: f.duration || 500
+      });
+    }
+
+    return {
+      version: 1,
+      matrix: { w: matrixW, h: matrixH },
+      fitMode: fitMode.value,
+      sliders: sliders,
+      invert: invertColorsInput.checked,
+      mirror: mirrorHInput.checked,
+      transition: { type: transitionType, intensity: transitionIntensity },
+      framesCount: numFrames,
+      frames: frames,
+      board: boardSelect.value,
+      currentColor: currentColor
+    };
+  }
+
+  function loadSettingsObject(obj) {
+    if (!obj || typeof obj !== "object") {
+      message.textContent = "Ungültige Einstellungen.";
+      return;
+    }
+
+    const w = obj.matrix?.w ?? 16;
+    const h = obj.matrix?.h ?? 16;
+    matrixWidthInput.value = w;
+    matrixHeightInput.value = h;
+    clampMatrixSize();
+
+    fitMode.value = obj.fitMode || "cover";
+
+    brightnessInput.value = obj.sliders?.brightness ?? 100;
+    contrastInput.value = obj.sliders?.contrast ?? 100;
+    saturationInput.value = obj.sliders?.saturation ?? 100;
+    gammaInput.value = obj.sliders?.gamma ?? 100;
+    invertColorsInput.checked = !!obj.sliders?.invert || !!obj.invert;
+    mirrorHInput.checked = !!obj.sliders?.mirrorH || !!obj.mirror;
+
+    const framesCount = Math.min(Math.max(obj.framesCount || 1, 1), MAX_FRAMES);
+    frameCountSlider.value = framesCount;
+    frameCountValue.textContent = String(framesCount);
+
+    transitionIntensity = obj.transition?.intensity ?? 5;
+    transitionIntensitySlider.value = transitionIntensity;
+    transitionIntensityValue.textContent = String(transitionIntensity);
+    setTransitionRadio(obj.transition?.type || "none");
+
+    if (obj.board) {
+      boardSelect.value = obj.board;
+    }
+
+    numFrames = framesCount;
+    framesData = [];
+    for (let i = 0; i < MAX_FRAMES; i++) {
+      framesData.push({ basePixels: null, overlayPixels: null, duration: 500 });
+    }
+
+    const framesPayload = Array.isArray(obj.frames) ? obj.frames : [];
+    for (let i = 0; i < framesCount; i++) {
+      const payload = framesPayload[i] || {};
+      framesData[i].basePixels = normalizeBasePixels(payload.base);
+      framesData[i].overlayPixels = normalizeOverlayPixels(payload.overlay);
+      framesData[i].duration = payload.duration || 500;
+    }
+
+    currentFrame = 0;
+    basePixels = clonePixels(framesData[0].basePixels);
+    overlayPixels = clonePixels(framesData[0].overlayPixels);
+    frameDurationSlider.value = framesData[0].duration;
+    frameDurationValue.textContent = String(framesData[0].duration);
+
+    updateFrameButtons();
+
+    if (obj.currentColor) {
+      setCurrentColorFromRGB(obj.currentColor.r ?? 255, obj.currentColor.g ?? 255, obj.currentColor.b ?? 255);
+    }
+
+    updatePreviewAndExport();
+    message.textContent = "Einstellungen geladen.";
+  }
+
+  function resetAll() {
+    stopPreviewAnimation();
+    fitMode.value = "cover";
+    brightnessInput.value = "100";
+    contrastInput.value = "100";
+    saturationInput.value = "100";
+    gammaInput.value = "100";
+    invertColorsInput.checked = false;
+    mirrorHInput.checked = false;
+    matrixWidthInput.value = "16";
+    matrixHeightInput.value = "16";
+    clampMatrixSize();
+    transitionIntensity = 5;
+    transitionIntensitySlider.value = "5";
+    transitionIntensityValue.textContent = "5";
+    setTransitionRadio("none");
+    boardSelect.value = "arduino";
+    lastImage = null;
+    initFramesData();
+    if (paletteContainer.firstElementChild) {
+      paletteContainer.firstElementChild.click();
+    }
+    updatePreviewAndExport();
+    message.textContent = "Zurückgesetzt.";
   }
 
   function saveCurrentFrame() {
@@ -428,7 +607,7 @@
     simCtx.fillStyle = "#0d1628";
     simCtx.fillRect(0, 0, pixelCanvas.width, pixelCanvas.height);
 
-    const neutral = { r: 96, g: 102, b: 110 };
+    const neutral = { r: 82, g: 88, b: 96 };
 
     for (let y = 0; y < matrixH; y++) {
       for (let x = 0; x < matrixW; x++) {
@@ -1040,10 +1219,57 @@
     updatePreviewAndExport();
   }
 
+  function downloadSettingsFile() {
+    const snapshot = snapshotSettings();
+    const text = JSON.stringify(snapshot, null, 2);
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "neopixel-einstellungen.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    message.textContent = "Einstellungen gespeichert.";
+  }
+
+  function handleUploadFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const obj = JSON.parse(e.target.result);
+        loadSettingsObject(obj);
+      } catch (err) {
+        message.textContent = "Datei konnte nicht gelesen werden.";
+      }
+    };
+    reader.readAsText(file);
+  }
+
   // Events
   fileInput.addEventListener("change", function (e) {
     const file = e.target.files[0];
     loadImageFromFile(file);
+  });
+
+  resetBtn.addEventListener("click", function () {
+    resetAll();
+  });
+
+  saveBtn.addEventListener("click", function () {
+    downloadSettingsFile();
+  });
+
+  uploadBtn.addEventListener("click", function () {
+    uploadInput.value = "";
+    uploadInput.click();
+  });
+
+  uploadInput.addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    handleUploadFile(file);
   });
 
   fitMode.addEventListener("change", function () {
